@@ -26,6 +26,8 @@ Each run writes a timestamped folder in `tmp/lm-studio-tasks/` containing:
 - `tasks.json` — the model’s suggested GitHub Copilot tasks (or error details if the call fails).
 - `lm-response.json` — full raw response when the call succeeds.
 
+More details live in [`docs/generate-readme-tasks.md`](docs/generate-readme-tasks.md).
+
 ### Convert tasks for GitHub Copilot
 
 Turn the generated JSON tasks into Copilot-ready prompts:
@@ -40,6 +42,8 @@ You’ll get two files alongside the original `tasks.json`:
 
 - `copilot-prompts.md` — copy/paste each fenced block into GitHub Copilot Chat.
 - `copilot-prompts.json` — structured prompts for the Copilot CLI (`npx @githubnext/copilot-cli chat --prompt "<prompt>"`).
+
+Full reference: [`docs/prepare-copilot-prompts.md`](docs/prepare-copilot-prompts.md).
 
 ## Contributing
 
