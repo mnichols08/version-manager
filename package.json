@@ -1,6 +1,6 @@
 {
   "name": "version-manager",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A tool designed to help developers streamline versioning in a git repository.",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

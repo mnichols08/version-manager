@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [0.0.2] - 2025-09-25
+
+- feat: update package.json description and enhance metadata
+- feat: add documentation for release management scripts
+- feat: add scripts for release management and changelog updates
+
 ## [0.0.1] - 2025-09-25
 ### Added
 
