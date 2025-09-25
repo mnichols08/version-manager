@@ -1,5 +1,21 @@
 {
   "name": "version-manager",
   "version": "0.0.1",
-  "description": "A tool for managing version numbers in package.json, HTML files, and service workers",
+  "description": "A tool designed to help developers streamline versioning in a git repository.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bump-sw": "node scripts/bump-sw.js",
+    "pre-release": "node scripts/pre-release.js",
+    "release": "node scripts/release.js",
+    "update-changelog": "node scripts/update-changelog.js"
+  },
+  "keywords": [
+    "cli",
+    "tool",
+    "changelog",
+    "service-worker",
+    "pwa-tool"
+  ],
+  "author": "Mikey Nichols",
+  "license": "ISC"
 }
