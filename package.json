@@ -1,0 +1,5 @@
+{
+  "name": "version-manager",
+  "version": "0.0.1",
+  "description": "A tool for managing version numbers in package.json, HTML files, and service workers",
+}
