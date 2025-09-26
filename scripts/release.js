@@ -1,11 +1,13 @@
 #!/usr/bin/env node
+'use strict';
 /**
  * release.js
  *
- * Unified release workflow:
- * 1. Update CHANGELOG.md with commits since last tag.
- * 2. Run bump-sw-cache.js to bump version in sw.js, html, package.json, etc.
- * 3. Stage & commit CHANGELOG.md with release commit.
+ * Updated release workflow:
+ * 1. Refresh README snapshots using recent commit history.
+ * 2. Regenerate CHANGELOG.md for the upcoming version bump.
+ * 3. Stage and commit documentation updates via pre-release.
+ * 4. Delegate version bumping, tagging, and optional pushing to bump-sw.js.
  *
  * Usage:
  *   node scripts/release.js [--patch|--minor|--major] [--dry] [--push] [--force-tag]
@@ -13,15 +15,12 @@
 
 const path = require('path');
 const cp = require('child_process');
-const fs = require('fs');
 
 const root = path.join(__dirname, '..');
-const changelogPath = path.join(root, 'CHANGELOG.md');
 
 const args = process.argv.slice(2);
-const has = (f) => args.includes(f);
+const has = (flag) => args.includes(flag);
 
-// Default bump type = patch
 let bumpType = '--patch';
 if (has('--major')) bumpType = '--major';
 else if (has('--minor')) bumpType = '--minor';
@@ -35,64 +34,72 @@ function exec(cmd, opts = { stdio: 'inherit' }) {
   return cp.execSync(cmd, { cwd: root, ...opts });
 }
 
-function execCapture(cmd) {
-  return cp.execSync(cmd, { cwd: root }).toString().trim();
-}
-
-function fileChanged(file) {
+function tryExecCapture(cmd) {
   try {
-    const diff = execCapture(`git status --porcelain "${file}"`);
-    return diff.length > 0;
-  } catch {
-    return false;
+    return cp
+      .execSync(cmd, { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] })
+      .toString()
+      .trim();
+  } catch (_error) {
+    return '';
   }
 }
 
-function getCurrentVersion() {
-  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  return pkg.version;
+function getStagedFiles() {
+  const output = tryExecCapture('git diff --cached --name-only');
+  if (!output) return [];
+  return output.split(/\r?\n/).filter(Boolean);
+}
+
+function runScript(parts) {
+  const command = parts.filter(Boolean).join(' ');
+  exec(command);
 }
 
 function main() {
   console.log('=== Release script starting ===');
 
-  // Step 0: Run pre-release to stage relevant files (if not dry run)
-  if (!DRY) {
-    console.log('Running pre-release to stage files...');
-    exec('node scripts/pre-release.js');
-  } else {
+  const updateReadmesArgs = ['node', 'scripts/update-readmes.js'];
+  if (DRY) updateReadmesArgs.push('--dry');
+  updateReadmesArgs.push('--since-tag');
+  runScript(updateReadmesArgs);
+
+  const updateChangelogArgs = ['node', 'scripts/update-changelog.js', bumpType];
+  if (DRY) updateChangelogArgs.push('--dry');
+  runScript(updateChangelogArgs);
+
+  if (DRY) {
     console.log('Pre-release staging (dry-run preview):');
-    exec('node scripts/pre-release.js --dry');
-  }
-
-  // Step 1: update changelog
-  if (!DRY) {
-    exec(`node scripts/update-changelog.js ${bumpType}`);
+    runScript(['node', 'scripts/pre-release.js', '--dry']);
   } else {
-    exec(`node scripts/update-changelog.js ${bumpType} --dry`);
+    console.log('Staging documentation changes via pre-release...');
+    runScript(['node', 'scripts/pre-release.js']);
+
+    const stagedFiles = getStagedFiles();
+    if (stagedFiles.length) {
+      console.log('Staged files ready for documentation commit:');
+      stagedFiles.forEach((file) => console.log(`  - ${file}`));
+      console.log('Creating documentation prep commit...');
+      runScript(['git', 'commit', '-m', '"docs: prepare release notes"']);
+    } else {
+      console.log('No staged documentation changes detected; skipping docs commit.');
+    }
   }
 
-  const changelogWasChanged = !DRY && fs.existsSync(changelogPath) && fileChanged('CHANGELOG.md');
-  if (changelogWasChanged) {
-    exec('git add CHANGELOG.md');
-  }
+  const bumpCommand = ['node', 'scripts/bump-sw.js', bumpType];
+  if (DRY) bumpCommand.push('--dry');
+  if (PUSH) bumpCommand.push('--push');
+  if (FORCE) bumpCommand.push('--force-tag');
+  runScript(bumpCommand);
 
-  // Step 2: bump sw/cache + package versions
-  let bumpCmd = `node scripts/bump-sw.js ${bumpType}`;
-  if (DRY) bumpCmd += ' --dry';
-  if (PUSH) bumpCmd += ' --push';
-  if (FORCE) bumpCmd += ' --force-tag';
-  exec(bumpCmd);
-
-  // Step 3: adjust commit message if changelog included
-  if (!DRY && changelogWasChanged) {
-    try {
-      const version = getCurrentVersion();
-      // Amend the last commit (created by bump-sw) to include changelog note
-      exec(`git commit --amend -m "chore(release): bump to v${version}" -m "docs(changelog): update changelog"`);
-      console.log('Amended release commit to include changelog update.');
-    } catch (e) {
-      console.warn('Could not amend commit with changelog note:', e.message);
+  if (!DRY) {
+    const remaining = tryExecCapture('git status --porcelain');
+    if (remaining) {
+      console.log('Remaining working tree changes after release flow:');
+      remaining
+        .split(/\r?\n/)
+        .filter(Boolean)
+        .forEach((line) => console.log(`  ${line}`));
     }
   }
 
@@ -101,7 +108,7 @@ function main() {
 
 try {
   main();
-} catch (e) {
-  console.error(e.message || String(e));
+} catch (error) {
+  console.error(error.message || String(error));
   process.exit(1);
 }

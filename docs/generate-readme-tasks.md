@@ -59,6 +59,10 @@ Each run generates a folder: `tmp/lm-studio-tasks/<timestamp-id>/` containing:
 - `lm-response.json` – raw LM Studio response payload (when available).
 - `lm-error.log` – captured error text if the request fails.
 
+You can review `tasks.json` directly to triage suggested README updates or copy individual
+ideas into GitHub Copilot Chat. The dedicated Copilot prompt conversion script has been
+retired, so all post-processing happens manually now.
+
 ## Examples
 
 ```bash
@@ -78,3 +82,5 @@ npm run generate-readme-tasks
 - **Unexpected endpoint error**: ensure the base URL includes the `/v1` path (e.g., `http://localhost:1234/v1`).
 - **Empty tasks**: confirm LM Studio is running, the model is loaded, and the request is not skipped.
 - **Old context reused**: remove or ignore previous folders; the script always creates a new run directory.
+- **Model takes too long**: use `--skip-llm` to capture context only, then inspect `context.md` and
+	`tasks.json` yourself for planning.

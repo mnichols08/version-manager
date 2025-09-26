@@ -44,12 +44,13 @@ npm run update-changelog -- --dry --minor
 
 ### Commit Analysis
 - Identifies all commits since the last git tag
-- Extracts commit messages and metadata
-- Organizes commits by type or category
+- Extracts commit metadata (type, scope, author, impacted files)
+- Detects breaking changes and documentation touchpoints
+- Organizes commits by type or category for richer storytelling
 
 ### Changelog Generation
-- Creates properly formatted changelog entries
-- Includes version numbers and dates
+- Creates structured changelog entries with Summary, Highlights, and sections per change type
+- Includes version numbers, dates, and linked commit references
 - Maintains consistent formatting with existing changelog
 
 ### Version Calculation
@@ -61,16 +62,17 @@ npm run update-changelog -- --dry --minor
 
 The script generates changelog entries following standard conventions:
 - Version headers with dates
-- Categorized changes (if commit messages follow conventional format)
-- Proper markdown formatting
-- Links to commits or issues (when applicable)
+- A summary block that captures the release story and focus areas
+- Optional highlights and breaking change callouts for quick scanning
+- Categorized changes (when commit messages follow a conventional format)
+- Proper markdown formatting with linked commit references where available
 
 ## Integration
 
 This script is typically used:
-- As part of the release workflow (called by `release.js`)
+- As part of the release workflow (called by `release.js` before the version bump)
 - Before version bumping to document changes
-- To maintain consistent release documentation
+- To keep release documentation aligned with README highlights
 - In CI/CD pipelines for automated releases
 
 ## File Management

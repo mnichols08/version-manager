@@ -8,8 +8,8 @@
     "pre-release": "node scripts/pre-release.js",
     "release": "node scripts/release.js",
     "update-changelog": "node scripts/update-changelog.js",
-    "generate-readme-tasks": "node scripts/generate-readme-tasks.js",
-    "prepare-copilot-prompts": "node scripts/prepare-copilot-prompts.js"
+    "update-readmes": "node scripts/update-readmes.js",
+    "generate-readme-tasks": "node scripts/generate-readme-tasks.js"
   },
   "keywords": [
     "cli",

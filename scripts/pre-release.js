@@ -33,8 +33,9 @@ const ALL = has('--all');
 // Files that are typically modified during releases
 const RELEASE_FILES = [
   'package.json',
-  'package-lock.json', 
+  'package-lock.json',
   'CHANGELOG.md',
+  'README.md',
   'src/sw.js',
   'src/index.html',
   'src/offline.html'
@@ -107,6 +108,13 @@ function main() {
     );
     console.log('Staging only modified release-related files');
   }
+
+  const readmeFiles = modifiedFiles.filter((file) => /README\.md$/i.test(file));
+  readmeFiles.forEach((file) => {
+    if (!filesToStage.includes(file)) {
+      filesToStage.push(file);
+    }
+  });
   
   if (filesToStage.length === 0) {
     console.log('No files to stage');

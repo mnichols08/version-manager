@@ -11,6 +11,13 @@
 const fs = require('fs');
 const path = require('path');
 const cp = require('child_process');
+const {
+  collectCommits,
+  groupCommitsByType,
+  buildSummaryInsights,
+  formatCommitLine,
+  selectHighlights
+} = require('../src/utils/git');
 
 const root = path.join(__dirname, '..');
 const changelogPath = path.join(root, 'CHANGELOG.md');
@@ -59,29 +66,51 @@ function getLastTag() {
   return tag || null;
 }
 
-function getCommitsSinceTag(tag) {
-  const cmd = tag 
-    ? `git log ${tag}..HEAD --oneline --no-merges`
-    : 'git log --oneline --no-merges';
-  
-  const output = execCapture(cmd);
-  return output ? output.split('\n').filter(line => line.trim()) : [];
-}
-
 function formatChangelogEntry(version, commits) {
   const date = new Date().toISOString().split('T')[0];
   let entry = `\n## [${version}] - ${date}\n\n`;
-  
+
   if (commits.length === 0) {
-    entry += '- Initial release\n';
-  } else {
-    commits.forEach(commit => {
-      // Remove commit hash and format
-      const message = commit.replace(/^[a-f0-9]{7,}\s*/, '');
-      entry += `- ${message}\n`;
-    });
+    entry += '- No code changes in this release.\n';
+    return entry;
   }
-  
+
+  const summaryLines = buildSummaryInsights(commits);
+  if (summaryLines.length) {
+    entry += '### Summary\n\n';
+    summaryLines.forEach((line) => {
+      entry += `- ${line}\n`;
+    });
+    entry += '\n';
+  }
+
+  const highlights = selectHighlights(commits);
+  if (highlights.length) {
+    entry += '### Highlights\n\n';
+    highlights.forEach((commit) => {
+      entry += `${formatCommitLine(commit, { includeFiles: true, includeRefs: true })}\n`;
+    });
+    entry += '\n';
+  }
+
+  const breakingCommits = commits.filter((commit) => commit.breaking);
+  if (breakingCommits.length) {
+    entry += '### ⚠️ Breaking Changes\n\n';
+    breakingCommits.forEach((commit) => {
+      entry += `${formatCommitLine(commit, { includeFiles: true, includeRefs: true })}\n`;
+    });
+    entry += '\n';
+  }
+
+  const grouped = groupCommitsByType(commits);
+  grouped.forEach((group) => {
+    entry += `### ${group.label}\n\n`;
+    group.commits.forEach((commit) => {
+      entry += `${formatCommitLine(commit, { includeFiles: true, includeRefs: true })}\n`;
+    });
+    entry += '\n';
+  });
+
   return entry;
 }
 
@@ -141,14 +170,16 @@ function main() {
   const currentVersion = getCurrentVersion();
   const nextVersion = getNextVersion(currentVersion, bumpType);
   const lastTag = getLastTag();
-  const commits = getCommitsSinceTag(lastTag);
+  const { commits } = collectCommits({ since: lastTag });
   
   console.log(`Updating changelog: ${currentVersion} -> ${nextVersion}`);
   console.log(`Found ${commits.length} commits since ${lastTag || 'beginning'}`);
   
   if (DRY) {
     console.log('[dry] Commits to include:');
-    commits.forEach(commit => console.log(`  - ${commit}`));
+    commits.forEach((commit) => {
+      console.log(`  - ${commit.shortHash} ${commit.description}`);
+    });
   }
   
   updateChangelog(nextVersion, commits);

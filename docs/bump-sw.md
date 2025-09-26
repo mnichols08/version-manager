@@ -5,10 +5,10 @@ A comprehensive version bumping script that updates versions across multiple fil
 ## Purpose
 
 This script automatically updates version numbers in:
-- Service Worker (`sw.js`): Updates `CACHE_VERSION` variable
-- HTML files: Updates cache-busting query parameters (`?v=X.Y.Z`) in `index.html` and `offline.html`
-- `package.json`: Updates the version field
-- `package-lock.json`: Updates version and packages[""]?.version
+- Service worker (`sw.js`): updates the `CACHE_VERSION` variable when the file exists
+- HTML entry points: refreshes cache-busting query parameters (`?v=X.Y.Z`) in `index.html` and `offline.html`
+- `package.json`: synchronizes the package version
+- `package-lock.json`: aligns the top-level version and `packages[""]?.version` when present
 
 ## Usage
 
@@ -30,10 +30,10 @@ node scripts/bump-sw.js [options]
 - `--patch` - Bump patch version (X.Y.Z) **[default]**
 
 ### Git Operations
-- `--no-git` - Disable git operations (tagging disabled)
-- `--no-commit` - Skip creating release commit
-- `--force-tag` - Force create tag even if it exists
-- `--push` - Push tags and commits to remote
+- `--no-git` - Disable git operations (skip tagging and pushing)
+- `--no-commit` - Skip creating the release commit before tagging
+- `--force-tag` - Overwrite an existing tag of the same name
+- `--push` - Push release commit(s) and tags to the remote
 
 ### General
 - `--dry` - Show what would be changed without making actual changes
@@ -59,7 +59,11 @@ npm run bump-sw -- --minor --push
 
 ## Default Behavior
 
-- Creates a git tag by default (use `--no-git` to disable)
-- Creates a release commit by default (use `--no-commit` to skip)
-- Uses patch version increment if no version type specified
-- Preserves version prefix format in service worker files
+- Detects whether the service worker or HTML files exist and skips them gracefully if they do not
+- Creates a release commit and annotated tag unless you opt out (`--no-commit`, `--no-git`)
+- Uses a patch bump when you do not specify `--major`, `--minor`, or `--set`
+- Preserves any leading `v` prefix present in existing version strings
+- When `--push` is provided, pushes both the commit and tag to the configured remote
+
+`bump-sw.js` is the final step of the release pipeline. It assumes the README and changelog have
+already been updated and staged, which is handled automatically by `release.js`.

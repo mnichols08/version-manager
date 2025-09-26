@@ -12,9 +12,12 @@ The script monitors and stages these files when they have changes:
 - `package.json` - Version and metadata updates
 - `package-lock.json` - Dependency lock file updates
 - `CHANGELOG.md` - Release notes and change history
+- `README.md` - Top-level documentation refreshes
 - `src/sw.js` - Service worker with version updates (if exists)
 - `src/index.html` - Main HTML with cache-busting updates (if exists)
 - `src/offline.html` - Offline page with version updates (if exists)
+In addition, any modified `README.md` files elsewhere in the repository are
+automatically staged to keep documentation in sync.
 
 ## Usage
 
@@ -48,14 +51,15 @@ npm run pre-release -- --all
 ## Workflow Integration
 
 This script is typically used:
-1. After running version bump scripts
+1. After regenerating README and changelog content
 2. Before creating release commits
 3. As part of automated release pipelines
 4. To ensure consistent staging of release-related files
 
 ## Output
 
-The script will show:
-- Which files were found and checked
-- Which files had changes and were staged
-- Which files were skipped (no changes or don't exist)
+- The script will show:
+	- Which files were found and checked
+	- Which files had changes and were staged (including any additional README files)
+	- Which files were skipped (no changes or don't exist)
+	- In non-dry runs, a summary of staged files after `git add` completes
